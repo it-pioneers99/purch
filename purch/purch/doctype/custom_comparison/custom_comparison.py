@@ -83,6 +83,24 @@ def get_item_rate(item, supplier, supplier_list):
 	return flt(item.get(PRICE_FIELDS[idx]))
 
 
+def get_po_item_dict(item, comparison, rate):
+	return {
+		"item_code": item.item_code,
+		"item_name": item.item_name,
+		"description": item.description,
+		"uom": item.uom,
+		"stock_uom": item.uom,
+		"qty": item.qty,
+		"rate": rate,
+		"warehouse": item.warehouse,
+		"project": item.project,
+		"cost_center": item.cost_center,
+		"material_request": comparison.material_request,
+		"material_request_item": item.material_request_item,
+		"schedule_date": nowdate(),
+	}
+
+
 @frappe.whitelist()
 def make_from_material_request(source_name, target_doc=None):
 	def postprocess(source, target):
@@ -114,9 +132,12 @@ def make_from_material_request(source_name, target_doc=None):
 					["name", "material_request_item"],
 					["item_code", "item_code"],
 					["item_name", "item_name"],
+					["description", "description"],
 					["uom", "uom"],
 					["qty", "qty"],
 					["warehouse", "warehouse"],
+					["project", "project"],
+					["cost_center", "cost_center"],
 				],
 			},
 		},
@@ -193,21 +214,7 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 
 	for row in po_items:
 		item = row["item"]
-		po.append(
-			"items",
-			{
-				"item_code": item.item_code,
-				"item_name": item.item_name,
-				"uom": item.uom,
-				"stock_uom": item.uom,
-				"qty": item.qty,
-				"rate": row["rate"],
-				"warehouse": item.warehouse,
-				"material_request": comparison.material_request,
-				"material_request_item": item.material_request_item,
-				"schedule_date": nowdate(),
-			},
-		)
+		po.append("items", get_po_item_dict(item, comparison, row["rate"]))
 
 	po.set_missing_values()
 	po.calculate_taxes_and_totals()
@@ -253,21 +260,7 @@ def make_purchase_orders_for_all(source_name):
 
 		for row in rows:
 			item = row["item"]
-			po.append(
-				"items",
-				{
-					"item_code": item.item_code,
-					"item_name": item.item_name,
-					"uom": item.uom,
-					"stock_uom": item.uom,
-					"qty": item.qty,
-					"rate": row["rate"],
-					"warehouse": item.warehouse,
-					"material_request": comparison.material_request,
-					"material_request_item": item.material_request_item,
-					"schedule_date": nowdate(),
-				},
-			)
+			po.append("items", get_po_item_dict(item, comparison, row["rate"]))
 
 		po.set_missing_values()
 		po.calculate_taxes_and_totals()
