@@ -1,0 +1,179 @@
+{
+ "actions": [],
+ "creation": "2026-06-15 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "uom",
+  "qty",
+  "warehouse",
+  "material_request_item",
+  "column_break_prices",
+  "price_1",
+  "price_2",
+  "price_3",
+  "price_4",
+  "price_5",
+  "price_6",
+  "price_7",
+  "price_8",
+  "price_9",
+  "price_10",
+  "section_break_selection",
+  "selected_supplier",
+  "selected_rate",
+  "lowest_supplier",
+  "lowest_rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "material_request_item",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Material Request Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_prices",
+   "fieldtype": "Column Break",
+   "label": "Supplier Prices"
+  },
+  {
+   "fieldname": "price_1",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price Supplier 1"
+  },
+  {
+   "fieldname": "price_2",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price Supplier 2"
+  },
+  {
+   "fieldname": "price_3",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price Supplier 3"
+  },
+  {
+   "fieldname": "price_4",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 4"
+  },
+  {
+   "fieldname": "price_5",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 5"
+  },
+  {
+   "fieldname": "price_6",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 6"
+  },
+  {
+   "fieldname": "price_7",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 7"
+  },
+  {
+   "fieldname": "price_8",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 8"
+  },
+  {
+   "fieldname": "price_9",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 9"
+  },
+  {
+   "fieldname": "price_10",
+   "fieldtype": "Currency",
+   "label": "Price Supplier 10"
+  },
+  {
+   "fieldname": "section_break_selection",
+   "fieldtype": "Section Break",
+   "label": "Selection"
+  },
+  {
+   "fieldname": "selected_supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Selected Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "selected_rate",
+   "fieldtype": "Currency",
+   "label": "Selected Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lowest_supplier",
+   "fieldtype": "Link",
+   "label": "Lowest Supplier",
+   "options": "Supplier",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lowest_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Lowest Rate",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Purch",
+ "name": "Custom Comparison Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
