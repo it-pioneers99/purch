@@ -17,8 +17,20 @@ AMOUNT_FIELDS = [f"amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 class CustomComparison(Document):
 	def validate(self):
 		self.validate_suppliers()
+		self.validate_material_requests()
 		self.update_item_prices()
 		self.update_supplier_totals()
+
+	def validate_material_requests(self):
+		material_requests = []
+		for row in self.material_requests:
+			if not row.material_request:
+				continue
+			if row.material_request in material_requests:
+				frappe.throw(_("Material Request {0} is duplicated").format(row.material_request))
+			material_requests.append(row.material_request)
+
+		sync_primary_material_request(self)
 
 	def validate_suppliers(self):
 		if len(self.suppliers) > MAX_SUPPLIERS:
@@ -48,9 +60,13 @@ class CustomComparison(Document):
 				item.set(field, 0)
 
 	def update_supplier_totals(self):
+		supplier_list = [row.supplier for row in self.suppliers if row.supplier]
+
 		for idx, supplier_row in enumerate(self.suppliers):
-			if idx < len(AMOUNT_FIELDS):
-				total = sum(flt(item.get(AMOUNT_FIELDS[idx])) for item in self.items)
+			if idx < len(supplier_list):
+				total = sum(
+					flt(item.get(PRICE_FIELDS[idx])) * flt(item.qty) for item in self.items
+				)
 				supplier_row.total_amount = total
 			else:
 				supplier_row.total_amount = 0
@@ -104,6 +120,7 @@ def get_item_rate(item, supplier, supplier_list):
 
 
 def get_po_item_dict(item, comparison, rate):
+	mr_name = item.material_request or comparison.material_request
 	return {
 		"item_code": item.item_code,
 		"item_name": item.item_name,
@@ -115,10 +132,155 @@ def get_po_item_dict(item, comparison, rate):
 		"warehouse": item.warehouse,
 		"project": item.project,
 		"cost_center": item.cost_center,
-		"material_request": comparison.material_request,
+		"material_request": mr_name,
 		"material_request_item": item.material_request_item,
 		"schedule_date": nowdate(),
 	}
+
+
+def get_buying_price_list(comparison, item=None):
+	mr_name = None
+	if item and item.material_request:
+		mr_name = item.material_request
+	elif comparison.material_requests:
+		mr_name = comparison.material_requests[0].material_request
+	elif comparison.material_request:
+		mr_name = comparison.material_request
+
+	if not mr_name:
+		return None
+
+	return frappe.db.get_value("Material Request", mr_name, "buying_price_list")
+
+
+def validate_material_request_for_comparison(mr, company=None):
+	if mr.docstatus != 1:
+		frappe.throw(_("Material Request {0} must be submitted").format(mr.name))
+
+	if mr.material_request_type != "Purchase":
+		frappe.throw(_("Material Request {0} must be of type Purchase").format(mr.name))
+
+	if company and mr.company != company:
+		frappe.throw(
+			_("Material Request {0} belongs to company {1}").format(mr.name, mr.company)
+		)
+
+
+def get_comparison_item_from_mr_item(mr_item, mr_name):
+	return {
+		"item_code": mr_item.item_code,
+		"item_name": mr_item.item_name,
+		"description": mr_item.description,
+		"uom": mr_item.uom,
+		"qty": mr_item.qty,
+		"warehouse": mr_item.warehouse,
+		"project": mr_item.project,
+		"cost_center": mr_item.cost_center,
+		"material_request": mr_name,
+		"material_request_item": mr_item.name,
+		"selected_supplier": None,
+		"selected_rate": 0,
+		**{field: 0 for field in PRICE_FIELDS + AMOUNT_FIELDS},
+	}
+
+
+def get_existing_mr_item_keys(comparison):
+	return {
+		(row.material_request, row.material_request_item)
+		for row in comparison.items
+		if row.material_request_item
+	}
+
+
+def get_linked_material_requests(comparison):
+	return {
+		row.material_request
+		for row in comparison.material_requests
+		if row.material_request
+	}
+
+
+def append_material_request_items(comparison, mr_name, skip_existing=True):
+	mr = frappe.get_doc("Material Request", mr_name)
+	validate_material_request_for_comparison(mr, comparison.company)
+
+	existing_items = get_existing_mr_item_keys(comparison) if skip_existing else set()
+	added_items = 0
+
+	for mr_item in mr.items:
+		key = (mr_name, mr_item.name)
+		if skip_existing and key in existing_items:
+			continue
+
+		comparison.append("items", get_comparison_item_from_mr_item(mr_item, mr_name))
+		added_items += 1
+
+	if mr_name not in get_linked_material_requests(comparison):
+		comparison.append("material_requests", {"material_request": mr_name})
+
+	sync_primary_material_request(comparison)
+	return added_items
+
+
+def sync_primary_material_request(comparison):
+	if comparison.material_requests:
+		comparison.material_request = comparison.material_requests[0].material_request
+	else:
+		comparison.material_request = None
+
+
+@frappe.whitelist()
+def get_items_from_material_requests(material_requests, company):
+	if isinstance(material_requests, str):
+		material_requests = json.loads(material_requests)
+
+	if not material_requests:
+		frappe.throw(_("Please select at least one Material Request"))
+
+	if not company:
+		frappe.throw(_("Please select Company first"))
+
+	items = []
+	mr_rows = []
+	seen_items = set()
+
+	for mr_name in dict.fromkeys(material_requests):
+		mr = frappe.get_doc("Material Request", mr_name)
+		validate_material_request_for_comparison(mr, company)
+		mr_rows.append({"material_request": mr_name})
+
+		for mr_item in mr.items:
+			key = (mr_name, mr_item.name)
+			if key in seen_items:
+				continue
+			seen_items.add(key)
+			items.append(get_comparison_item_from_mr_item(mr_item, mr_name))
+
+	return {"items": items, "material_requests": mr_rows}
+
+
+@frappe.whitelist()
+def add_items_from_material_requests(comparison_name, material_requests):
+	if isinstance(material_requests, str):
+		material_requests = json.loads(material_requests)
+
+	comparison = frappe.get_doc("Custom Comparison", comparison_name)
+
+	if comparison.docstatus != 0:
+		frappe.throw(_("Cannot add items to a submitted Custom Comparison"))
+
+	if not material_requests:
+		frappe.throw(_("Please select at least one Material Request"))
+
+	added_items = 0
+	for mr_name in dict.fromkeys(material_requests):
+		added_items += append_material_request_items(comparison, mr_name)
+
+	if not added_items:
+		frappe.msgprint(_("Selected Material Request items are already added"))
+
+	comparison.save()
+	return comparison
 
 
 @frappe.whitelist()
@@ -127,8 +289,10 @@ def make_from_material_request(source_name, target_doc=None):
 		target.material_request = source.name
 		target.company = source.company
 		target.transaction_date = source.transaction_date or nowdate()
+		target.append("material_requests", {"material_request": source.name})
 
 		for item in target.items:
+			item.material_request = source.name
 			item.selected_supplier = None
 			item.selected_rate = 0
 			for field in PRICE_FIELDS + AMOUNT_FIELDS:
@@ -228,9 +392,7 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 	po.transaction_date = comparison.transaction_date
 	po.schedule_date = nowdate()
 
-	if comparison.material_request:
-		mr = frappe.get_doc("Material Request", comparison.material_request)
-		po.buying_price_list = mr.buying_price_list
+	po.buying_price_list = get_buying_price_list(comparison, po_items[0]["item"])
 
 	for row in po_items:
 		item = row["item"]
@@ -239,6 +401,65 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 	po.set_missing_values()
 	po.calculate_taxes_and_totals()
 	return po
+
+
+@frappe.whitelist()
+def make_purchase_orders_for_selected(source_name, item_rows=None):
+	comparison = frappe.get_doc("Custom Comparison", source_name)
+
+	if comparison.docstatus != 1:
+		frappe.throw(_("Custom Comparison must be submitted before creating Purchase Order"))
+
+	if item_rows and isinstance(item_rows, str):
+		item_rows = json.loads(item_rows)
+
+	if not item_rows:
+		frappe.throw(_("Please select at least one item"))
+
+	supplier_list = get_supplier_list(comparison)
+	items_by_supplier = {}
+
+	for item in comparison.items:
+		if item.name not in item_rows:
+			continue
+
+		supplier = item.selected_supplier or item.lowest_supplier
+		if not supplier:
+			frappe.throw(_("Please select a supplier for item {0}").format(item.item_code))
+
+		rate = get_item_rate(item, supplier, supplier_list)
+		if rate <= 0:
+			frappe.throw(
+				_("Please enter a price for supplier {0} on item {1}").format(
+					supplier, item.item_code
+				)
+			)
+
+		items_by_supplier.setdefault(supplier, []).append({"item": item, "rate": rate})
+
+	if not items_by_supplier:
+		frappe.throw(_("No items selected for Purchase Order"))
+
+	created_pos = []
+	for supplier, rows in items_by_supplier.items():
+		po = frappe.new_doc("Purchase Order")
+		po.supplier = supplier
+		po.company = comparison.company
+		po.transaction_date = comparison.transaction_date
+		po.schedule_date = nowdate()
+
+		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
+
+		for row in rows:
+			item = row["item"]
+			po.append("items", get_po_item_dict(item, comparison, row["rate"]))
+
+		po.set_missing_values()
+		po.calculate_taxes_and_totals()
+		po.insert()
+		created_pos.append(po.name)
+
+	return created_pos
 
 
 @frappe.whitelist()
@@ -274,9 +495,7 @@ def make_purchase_orders_for_all(source_name):
 		po.transaction_date = comparison.transaction_date
 		po.schedule_date = nowdate()
 
-		if comparison.material_request:
-			mr = frappe.get_doc("Material Request", comparison.material_request)
-			po.buying_price_list = mr.buying_price_list
+		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
 
 		for row in rows:
 			item = row["item"]

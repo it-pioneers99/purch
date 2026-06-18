@@ -5,6 +5,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "select",
   "item_code",
   "item_name",
   "uom",
@@ -13,6 +14,7 @@
   "project",
   "cost_center",
   "description",
+  "material_request",
   "material_request_item",
   "column_break_prices",
   "price_1",
@@ -43,6 +45,14 @@
   "lowest_rate"
  ],
  "fields": [
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "select",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Select"
+  },
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
@@ -98,6 +108,14 @@
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description"
+  },
+  {
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Material Request",
+   "options": "Material Request",
+   "read_only": 1
   },
   {
    "fieldname": "material_request_item",
