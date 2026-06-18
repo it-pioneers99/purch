@@ -400,6 +400,7 @@ function setup_custom_buttons(frm) {
 			args: {
 				source_name: frm.doc.name,
 				item_rows: selected.map((row) => row.name),
+			
 			},
 			freeze: true,
 			callback(r) {
