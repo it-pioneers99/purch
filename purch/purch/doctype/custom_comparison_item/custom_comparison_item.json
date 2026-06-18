@@ -25,6 +25,17 @@
   "price_8",
   "price_9",
   "price_10",
+  "column_break_amounts",
+  "amount_1",
+  "amount_2",
+  "amount_3",
+  "amount_4",
+  "amount_5",
+  "amount_6",
+  "amount_7",
+  "amount_8",
+  "amount_9",
+  "amount_10",
   "section_break_selection",
   "selected_supplier",
   "selected_rate",
@@ -152,6 +163,74 @@
    "fieldname": "price_10",
    "fieldtype": "Currency",
    "label": "Price Supplier 10"
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break",
+   "label": "Supplier Totals"
+  },
+  {
+   "fieldname": "amount_1",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Supplier 1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_2",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Supplier 2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_3",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Supplier 3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_4",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_5",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_6",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 6",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_7",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 7",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_8",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 8",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_9",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_10",
+   "fieldtype": "Currency",
+   "label": "Total Supplier 10",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_selection",

@@ -13,22 +13,33 @@ frappe.ui.form.on("Custom Comparison", {
 		setup_custom_buttons(frm);
 		if (frm.fields_dict.items?.grid) {
 			update_supplier_price_columns(frm);
+			(frm.doc.items || []).forEach((row) => {
+				set_row_amounts(row.doctype, row.name, row);
+			});
+			update_supplier_totals(frm);
 		}
 	},
 
 	suppliers_add(frm) {
 		update_supplier_price_columns(frm, true);
+		update_supplier_totals(frm);
 	},
 
 	suppliers_remove(frm) {
 		clear_removed_supplier_prices(frm);
 		update_supplier_price_columns(frm, true);
+		update_supplier_totals(frm);
+	},
+
+	items_remove(frm) {
+		update_supplier_totals(frm);
 	},
 });
 
 frappe.ui.form.on("Custom Comparison Supplier", {
 	supplier(frm) {
 		update_supplier_price_columns(frm, true);
+		update_supplier_totals(frm);
 	},
 });
 
@@ -72,10 +83,15 @@ frappe.ui.form.on("Custom Comparison Item", {
 	price_10(frm, cdt, cdn) {
 		update_row_price_summary(frm, cdt, cdn);
 	},
+
+	qty(frm, cdt, cdn) {
+		update_row_price_summary(frm, cdt, cdn);
+	},
 });
 
 const MAX_SUPPLIERS = 10;
 const PRICE_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `price_${i + 1}`);
+const AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `amount_${i + 1}`);
 
 function get_supplier_list(frm) {
 	return (frm.doc.suppliers || []).map((row) => row.supplier).filter(Boolean);
@@ -101,6 +117,19 @@ function update_supplier_price_columns(frm, refresh_grid) {
 
 		if (supplier) {
 			label = __("Price {0}", [get_supplier_name(frm, supplier)]);
+		}
+
+		items_grid.update_docfield_property(field, "label", label);
+		items_grid.update_docfield_property(field, "hidden", should_show ? 0 : 1);
+	});
+
+	AMOUNT_FIELDS.forEach((field, idx) => {
+		const supplier = supplier_list[idx];
+		const should_show = idx < visible_count;
+		let label = __("Total Supplier {0}", [idx + 1]);
+
+		if (supplier) {
+			label = __("Total {0}", [get_supplier_name(frm, supplier)]);
 		}
 
 		items_grid.update_docfield_property(field, "label", label);
@@ -152,13 +181,57 @@ function clear_removed_supplier_prices(frm) {
 				frappe.model.set_value(row.doctype, row.name, field, 0);
 			}
 		});
+		AMOUNT_FIELDS.forEach((field, idx) => {
+			if (!supplier_list[idx]) {
+				frappe.model.set_value(row.doctype, row.name, field, 0);
+			}
+		});
 		update_row_price_summary(frm, row.doctype, row.name);
 	});
+}
+
+function set_row_amounts(cdt, cdn, row) {
+	const qty = flt(row.qty);
+	AMOUNT_FIELDS.forEach((field, idx) => {
+		const amount = flt(row[PRICE_FIELDS[idx]]) * qty;
+		frappe.model.set_value(cdt, cdn, field, amount);
+	});
+}
+
+function update_supplier_totals(frm) {
+	const supplier_list = get_supplier_list(frm);
+	(frm.doc.suppliers || []).forEach((supplier_row, idx) => {
+		if (!supplier_list[idx]) {
+			frappe.model.set_value(
+				supplier_row.doctype,
+				supplier_row.name,
+				"total_amount",
+				0
+			);
+			return;
+		}
+
+		let total = 0;
+		(frm.doc.items || []).forEach((item) => {
+			total += flt(item[AMOUNT_FIELDS[idx]]);
+		});
+
+		frappe.model.set_value(
+			supplier_row.doctype,
+			supplier_row.name,
+			"total_amount",
+			total
+		);
+	});
+
+	frm.refresh_field("suppliers");
 }
 
 function update_row_price_summary(frm, cdt, cdn) {
 	const row = locals[cdt][cdn];
 	const supplier_list = get_supplier_list(frm);
+
+	set_row_amounts(cdt, cdn, row);
 
 	let lowest_rate = null;
 	let lowest_supplier = null;
@@ -182,6 +255,7 @@ function update_row_price_summary(frm, cdt, cdn) {
 		}
 	}
 
+	update_supplier_totals(frm);
 	highlight_lowest_prices(frm);
 }
 

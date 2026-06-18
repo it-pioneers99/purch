@@ -11,12 +11,14 @@ from frappe.utils import flt, nowdate
 
 MAX_SUPPLIERS = 10
 PRICE_FIELDS = [f"price_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
+AMOUNT_FIELDS = [f"amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 
 
 class CustomComparison(Document):
 	def validate(self):
 		self.validate_suppliers()
 		self.update_item_prices()
+		self.update_supplier_totals()
 
 	def validate_suppliers(self):
 		if len(self.suppliers) > MAX_SUPPLIERS:
@@ -32,8 +34,26 @@ class CustomComparison(Document):
 		supplier_list = [row.supplier for row in self.suppliers if row.supplier]
 
 		for item in self.items:
+			self.set_item_amounts(item, supplier_list)
 			self.set_lowest_price(item, supplier_list)
 			self.set_selected_rate(item, supplier_list)
+
+	def set_item_amounts(self, item, supplier_list):
+		qty = flt(item.qty)
+		for idx, field in enumerate(AMOUNT_FIELDS):
+			if idx < len(supplier_list):
+				rate = flt(item.get(PRICE_FIELDS[idx]))
+				item.set(field, rate * qty)
+			else:
+				item.set(field, 0)
+
+	def update_supplier_totals(self):
+		for idx, supplier_row in enumerate(self.suppliers):
+			if idx < len(AMOUNT_FIELDS):
+				total = sum(flt(item.get(AMOUNT_FIELDS[idx])) for item in self.items)
+				supplier_row.total_amount = total
+			else:
+				supplier_row.total_amount = 0
 
 	def set_lowest_price(self, item, supplier_list):
 		lowest_rate = None
@@ -111,7 +131,7 @@ def make_from_material_request(source_name, target_doc=None):
 		for item in target.items:
 			item.selected_supplier = None
 			item.selected_rate = 0
-			for field in PRICE_FIELDS:
+			for field in PRICE_FIELDS + AMOUNT_FIELDS:
 				item.set(field, 0)
 
 	return get_mapped_doc(
