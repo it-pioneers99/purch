@@ -540,3 +540,4 @@ function merge_material_request_data(frm, data) {
 		existing_items.add(key);
 	});
 }
+
