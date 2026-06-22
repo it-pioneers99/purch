@@ -16,6 +16,8 @@
   "description",
   "material_request",
   "material_request_item",
+  "request_for_proposal",
+  "request_for_proposal_item",
   "column_break_prices",
   "price_1",
   "price_2",
@@ -125,61 +127,93 @@
    "read_only": 1
   },
   {
+   "fieldname": "request_for_proposal",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Request for Proposal",
+   "options": "Request for Proposal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_for_proposal_item",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Request for Proposal Item",
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_prices",
    "fieldtype": "Column Break",
    "label": "Supplier Prices"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_1",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Price Supplier 1"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_2",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Price Supplier 2"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_3",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Price Supplier 3"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_4",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 4"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_5",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 5"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_6",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 6"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_7",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 7"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_8",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 8"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_9",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 9"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "price_10",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price Supplier 10"
   },
   {
@@ -256,6 +290,7 @@
    "label": "Selection"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "selected_supplier",
    "fieldtype": "Link",
    "in_list_view": 1,

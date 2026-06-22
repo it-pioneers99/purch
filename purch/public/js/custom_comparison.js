@@ -15,9 +15,21 @@ frappe.ui.form.on("Custom Comparison", {
 				company: frm.doc.company || "",
 			},
 		}));
+
+		frm.set_query("request_for_proposal", "request_for_proposals", () => ({
+			filters: {
+				docstatus: 1,
+				company: frm.doc.company || "",
+			},
+		}));
+	},
+
+	comparison_type(frm) {
+		toggle_comparison_source_fields(frm);
 	},
 
 	refresh(frm) {
+		toggle_comparison_source_fields(frm);
 		setup_custom_buttons(frm);
 		if (frm.fields_dict.items?.grid) {
 			update_supplier_price_columns(frm);
@@ -65,6 +77,16 @@ frappe.ui.form.on("Custom Comparison Material Request", {
 			return;
 		}
 		fetch_material_request_items(frm, [row.material_request]);
+	},
+});
+
+frappe.ui.form.on("Custom Comparison Request for Proposal", {
+	request_for_proposal(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.request_for_proposal || frm.doc.docstatus !== 0) {
+			return;
+		}
+		fetch_request_for_proposal_items(frm, [row.request_for_proposal]);
 	},
 });
 
@@ -117,6 +139,27 @@ frappe.ui.form.on("Custom Comparison Item", {
 const MAX_SUPPLIERS = 10;
 const PRICE_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `price_${i + 1}`);
 const AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `amount_${i + 1}`);
+const COMPARISON_TYPE_MR = "Material Request";
+const COMPARISON_TYPE_RFP = "Request For Proposal";
+
+function is_material_request_comparison(frm) {
+	return (frm.doc.comparison_type || COMPARISON_TYPE_MR) === COMPARISON_TYPE_MR;
+}
+
+function is_request_for_proposal_comparison(frm) {
+	return frm.doc.comparison_type === COMPARISON_TYPE_RFP;
+}
+
+function toggle_comparison_source_fields(frm) {
+	const items_grid = frm.fields_dict.items?.grid;
+	if (!items_grid) {
+		return;
+	}
+
+	const show_mr = is_material_request_comparison(frm);
+	items_grid.update_docfield_property("material_request", "hidden", show_mr ? 0 : 1);
+	items_grid.update_docfield_property("request_for_proposal", "hidden", show_mr ? 1 : 0);
+}
 
 function get_supplier_list(frm) {
 	return (frm.doc.suppliers || []).map((row) => row.supplier).filter(Boolean);
@@ -285,11 +328,13 @@ function setup_items_grid_selection(frm) {
 	const grid = frm.fields_dict.items?.grid;
 	if (!grid) return;
 
+	grid.static_rows = false;
+
 	if (frm.doc.docstatus !== 1) {
+		grid.df.cannot_add_rows = false;
 		return;
 	}
 
-	grid.only_sortable();
 	grid.df.cannot_add_rows = true;
 	grid.wrapper.find(".grid-footer").toggle(true);
 
@@ -337,9 +382,15 @@ function clear_item_selection(frm) {
 function setup_custom_buttons(frm) {
 	if (frm.doc.docstatus !== 1) {
 		if (frm.doc.company) {
-			frm.add_custom_button(__("Material Requests"), () => {
-				open_material_request_selector(frm);
-			}, __("Get Items From"));
+			if (is_material_request_comparison(frm)) {
+				frm.add_custom_button(__("Material Requests"), () => {
+					open_material_request_selector(frm);
+				}, __("Get Items From"));
+			} else if (is_request_for_proposal_comparison(frm)) {
+				frm.add_custom_button(__("Requests For Proposal"), () => {
+					open_request_for_proposal_selector(frm);
+				}, __("Get Items From"));
+			}
 		}
 
 		if (frm.doc.items?.length && get_supplier_list(frm).length) {
@@ -372,7 +423,9 @@ function setup_custom_buttons(frm) {
 		return;
 	}
 
-	const items_grid = frm.fields_dict.items?.grid;
+	if (!is_material_request_comparison(frm)) {
+		return;
+	}
 
 	frm.add_custom_button(__("Create PO (All Items)"), () => {
 		frappe.call({
@@ -532,6 +585,122 @@ function merge_material_request_data(frm, data) {
 
 	(data.items || []).forEach((row) => {
 		const key = `${row.material_request}::${row.material_request_item}`;
+		if (existing_items.has(key)) {
+			return;
+		}
+		const child = frappe.model.add_child(frm.doc, "Custom Comparison Item", "items");
+		Object.assign(child, row);
+		existing_items.add(key);
+	});
+}
+
+function open_request_for_proposal_selector(frm) {
+	if (!frm.doc.company) {
+		frappe.msgprint(__("Please select Company first"));
+		return;
+	}
+
+	new frappe.ui.form.MultiSelectDialog({
+		doctype: "Request for Proposal",
+		target: frm,
+		setters: {
+			company: frm.doc.company,
+		},
+		read_only_setters: ["company"],
+		get_query() {
+			return {
+				filters: {
+					docstatus: 1,
+					company: frm.doc.company,
+				},
+			};
+		},
+		action(selections) {
+			if (!selections?.length) {
+				frappe.msgprint(__("Please select at least one Request for Proposal"));
+				return;
+			}
+			fetch_request_for_proposal_items(frm, selections);
+		},
+	});
+}
+
+function fetch_request_for_proposal_items(frm, request_for_proposals) {
+	if (frm.doc.name && !frm.is_new()) {
+		frappe.call({
+			method:
+				"purch.purch.doctype.custom_comparison.custom_comparison.add_items_from_request_for_proposals",
+			args: {
+				comparison_name: frm.doc.name,
+				request_for_proposals,
+			},
+			freeze: true,
+			callback(r) {
+				if (!r.exc && r.message) {
+					frappe.model.sync(r.message);
+					frm.refresh();
+					frappe.show_alert({
+						message: __("Request for Proposal items added"),
+						indicator: "green",
+					});
+				}
+			},
+		});
+		return;
+	}
+
+	frappe.call({
+		method:
+			"purch.purch.doctype.custom_comparison.custom_comparison.get_items_from_request_for_proposals",
+		args: {
+			request_for_proposals,
+			company: frm.doc.company,
+		},
+		freeze: true,
+		callback(r) {
+			if (r.exc || !r.message) return;
+			merge_request_for_proposal_data(frm, r.message);
+			frm.refresh_field("request_for_proposals");
+			frm.refresh_field("items");
+			frappe.show_alert({
+				message: __("Request for Proposal items added"),
+				indicator: "green",
+			});
+		},
+	});
+}
+
+function merge_request_for_proposal_data(frm, data) {
+	const existing_items = new Set(
+		(frm.doc.items || [])
+			.filter((row) => row.request_for_proposal_item)
+			.map((row) => `${row.request_for_proposal}::${row.request_for_proposal_item}`)
+	);
+	const existing_rfps = new Set(
+		(frm.doc.request_for_proposals || [])
+			.map((row) => row.request_for_proposal)
+			.filter(Boolean)
+	);
+
+	(data.request_for_proposals || []).forEach((row) => {
+		if (existing_rfps.has(row.request_for_proposal)) {
+			return;
+		}
+		const child = frappe.model.add_child(
+			frm.doc,
+			"Custom Comparison Request for Proposal",
+			"request_for_proposals"
+		);
+		child.request_for_proposal = row.request_for_proposal;
+		existing_rfps.add(row.request_for_proposal);
+	});
+
+	if (!frm.doc.request_for_proposal && frm.doc.request_for_proposals?.length) {
+		frm.doc.request_for_proposal = frm.doc.request_for_proposals[0].request_for_proposal;
+	}
+
+	(data.items || []).forEach((row) => {
+		const key = `${row.request_for_proposal}::${row.request_for_proposal_item}`;
 		if (existing_items.has(key)) {
 			return;
 		}

@@ -16,7 +16,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Purchase Comparison",
-   "link_count": 1,
+   "link_count": 2,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -26,6 +26,16 @@
    "label": "Custom Comparison",
    "link_count": 0,
    "link_to": "Custom Comparison",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Request for Proposal",
+   "link_count": 0,
+   "link_to": "Request for Proposal",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -48,6 +58,13 @@
    "doc_view": "List",
    "label": "Custom Comparison",
    "link_to": "Custom Comparison",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Request for Proposal",
+   "link_to": "Request for Proposal",
    "type": "DocType"
   }
  ],

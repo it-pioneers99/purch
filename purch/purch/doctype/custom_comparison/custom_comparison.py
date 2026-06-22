@@ -12,14 +12,25 @@ from frappe.utils import flt, nowdate
 MAX_SUPPLIERS = 10
 PRICE_FIELDS = [f"price_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 AMOUNT_FIELDS = [f"amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
+COMPARISON_TYPE_MR = "Material Request"
+COMPARISON_TYPE_RFP = "Request For Proposal"
 
 
 class CustomComparison(Document):
 	def validate(self):
 		self.validate_suppliers()
-		self.validate_material_requests()
+		if self.is_material_request_comparison():
+			self.validate_material_requests()
+		elif self.is_request_for_proposal_comparison():
+			self.validate_request_for_proposals()
 		self.update_item_prices()
 		self.update_supplier_totals()
+
+	def is_material_request_comparison(self):
+		return (self.comparison_type or COMPARISON_TYPE_MR) == COMPARISON_TYPE_MR
+
+	def is_request_for_proposal_comparison(self):
+		return self.comparison_type == COMPARISON_TYPE_RFP
 
 	def validate_material_requests(self):
 		material_requests = []
@@ -31,6 +42,19 @@ class CustomComparison(Document):
 			material_requests.append(row.material_request)
 
 		sync_primary_material_request(self)
+
+	def validate_request_for_proposals(self):
+		request_for_proposals = []
+		for row in self.request_for_proposals:
+			if not row.request_for_proposal:
+				continue
+			if row.request_for_proposal in request_for_proposals:
+				frappe.throw(
+					_("Request for Proposal {0} is duplicated").format(row.request_for_proposal)
+				)
+			request_for_proposals.append(row.request_for_proposal)
+
+		sync_primary_request_for_proposal(self)
 
 	def validate_suppliers(self):
 		if len(self.suppliers) > MAX_SUPPLIERS:
@@ -109,6 +133,21 @@ def get_supplier_list(doc):
 	if isinstance(doc, str):
 		doc = frappe.get_doc("Custom Comparison", doc)
 	return [row.supplier for row in doc.suppliers if row.supplier]
+
+
+def ensure_material_request_comparison(comparison):
+	if comparison.comparison_type == COMPARISON_TYPE_RFP:
+		frappe.throw(_("This action is only available for Material Request comparisons"))
+
+
+def ensure_request_for_proposal_comparison(comparison):
+	if comparison.comparison_type != COMPARISON_TYPE_RFP:
+		frappe.throw(_("This action is only available for Request For Proposal comparisons"))
+
+
+def ensure_po_allowed(comparison):
+	if comparison.comparison_type == COMPARISON_TYPE_RFP:
+		frappe.throw(_("Purchase Orders cannot be created from Request For Proposal comparisons"))
 
 
 def get_item_rate(item, supplier, supplier_list):
@@ -229,6 +268,134 @@ def sync_primary_material_request(comparison):
 		comparison.material_request = None
 
 
+def validate_request_for_proposal_for_comparison(rfp, company=None):
+	if rfp.docstatus != 1:
+		frappe.throw(_("Request for Proposal {0} must be submitted").format(rfp.name))
+
+	if company and rfp.company != company:
+		frappe.throw(
+			_("Request for Proposal {0} belongs to company {1}").format(rfp.name, rfp.company)
+		)
+
+
+def get_comparison_item_from_rfp_item(rfp_item, rfp_name):
+	return {
+		"item_code": rfp_item.item_code,
+		"item_name": rfp_item.item_name,
+		"description": rfp_item.description,
+		"uom": rfp_item.uom,
+		"qty": rfp_item.qty,
+		"warehouse": rfp_item.warehouse,
+		"project": rfp_item.project,
+		"cost_center": rfp_item.cost_center,
+		"request_for_proposal": rfp_name,
+		"request_for_proposal_item": rfp_item.name,
+		"selected_supplier": None,
+		"selected_rate": 0,
+		**{field: 0 for field in PRICE_FIELDS + AMOUNT_FIELDS},
+	}
+
+
+def get_existing_rfp_item_keys(comparison):
+	return {
+		(row.request_for_proposal, row.request_for_proposal_item)
+		for row in comparison.items
+		if row.request_for_proposal_item
+	}
+
+
+def get_linked_request_for_proposals(comparison):
+	return {
+		row.request_for_proposal
+		for row in comparison.request_for_proposals
+		if row.request_for_proposal
+	}
+
+
+def append_request_for_proposal_items(comparison, rfp_name, skip_existing=True):
+	rfp = frappe.get_doc("Request for Proposal", rfp_name)
+	validate_request_for_proposal_for_comparison(rfp, comparison.company)
+
+	existing_items = get_existing_rfp_item_keys(comparison) if skip_existing else set()
+	added_items = 0
+
+	for rfp_item in rfp.items:
+		key = (rfp_name, rfp_item.name)
+		if skip_existing and key in existing_items:
+			continue
+
+		comparison.append("items", get_comparison_item_from_rfp_item(rfp_item, rfp_name))
+		added_items += 1
+
+	if rfp_name not in get_linked_request_for_proposals(comparison):
+		comparison.append("request_for_proposals", {"request_for_proposal": rfp_name})
+
+	sync_primary_request_for_proposal(comparison)
+	return added_items
+
+
+def sync_primary_request_for_proposal(comparison):
+	if comparison.request_for_proposals:
+		comparison.request_for_proposal = comparison.request_for_proposals[0].request_for_proposal
+	else:
+		comparison.request_for_proposal = None
+
+
+@frappe.whitelist()
+def get_items_from_request_for_proposals(request_for_proposals, company):
+	if isinstance(request_for_proposals, str):
+		request_for_proposals = json.loads(request_for_proposals)
+
+	if not request_for_proposals:
+		frappe.throw(_("Please select at least one Request for Proposal"))
+
+	if not company:
+		frappe.throw(_("Please select Company first"))
+
+	items = []
+	rfp_rows = []
+	seen_items = set()
+
+	for rfp_name in dict.fromkeys(request_for_proposals):
+		rfp = frappe.get_doc("Request for Proposal", rfp_name)
+		validate_request_for_proposal_for_comparison(rfp, company)
+		rfp_rows.append({"request_for_proposal": rfp_name})
+
+		for rfp_item in rfp.items:
+			key = (rfp_name, rfp_item.name)
+			if key in seen_items:
+				continue
+			seen_items.add(key)
+			items.append(get_comparison_item_from_rfp_item(rfp_item, rfp_name))
+
+	return {"items": items, "request_for_proposals": rfp_rows}
+
+
+@frappe.whitelist()
+def add_items_from_request_for_proposals(comparison_name, request_for_proposals):
+	if isinstance(request_for_proposals, str):
+		request_for_proposals = json.loads(request_for_proposals)
+
+	comparison = frappe.get_doc("Custom Comparison", comparison_name)
+	ensure_request_for_proposal_comparison(comparison)
+
+	if comparison.docstatus != 0:
+		frappe.throw(_("Cannot add items to a submitted Custom Comparison"))
+
+	if not request_for_proposals:
+		frappe.throw(_("Please select at least one Request for Proposal"))
+
+	added_items = 0
+	for rfp_name in dict.fromkeys(request_for_proposals):
+		added_items += append_request_for_proposal_items(comparison, rfp_name)
+
+	if not added_items:
+		frappe.msgprint(_("Selected Request for Proposal items are already added"))
+
+	comparison.save()
+	return comparison
+
+
 @frappe.whitelist()
 def get_items_from_material_requests(material_requests, company):
 	if isinstance(material_requests, str):
@@ -265,6 +432,7 @@ def add_items_from_material_requests(comparison_name, material_requests):
 		material_requests = json.loads(material_requests)
 
 	comparison = frappe.get_doc("Custom Comparison", comparison_name)
+	ensure_material_request_comparison(comparison)
 
 	if comparison.docstatus != 0:
 		frappe.throw(_("Cannot add items to a submitted Custom Comparison"))
@@ -286,6 +454,7 @@ def add_items_from_material_requests(comparison_name, material_requests):
 @frappe.whitelist()
 def make_from_material_request(source_name, target_doc=None):
 	def postprocess(source, target):
+		target.comparison_type = COMPARISON_TYPE_MR
 		target.material_request = source.name
 		target.company = source.company
 		target.transaction_date = source.transaction_date or nowdate()
@@ -331,8 +500,56 @@ def make_from_material_request(source_name, target_doc=None):
 
 
 @frappe.whitelist()
+def make_from_request_for_proposal(source_name, target_doc=None):
+	def postprocess(source, target):
+		target.comparison_type = COMPARISON_TYPE_RFP
+		target.request_for_proposal = source.name
+		target.company = source.company
+		target.transaction_date = source.transaction_date or nowdate()
+		target.append("request_for_proposals", {"request_for_proposal": source.name})
+
+		for item in target.items:
+			item.request_for_proposal = source.name
+			item.selected_supplier = None
+			item.selected_rate = 0
+			for field in PRICE_FIELDS + AMOUNT_FIELDS:
+				item.set(field, 0)
+
+	return get_mapped_doc(
+		"Request for Proposal",
+		source_name,
+		{
+			"Request for Proposal": {
+				"doctype": "Custom Comparison",
+				"validation": {
+					"docstatus": ["=", 1],
+				},
+				"field_map": [["name", "request_for_proposal"]],
+			},
+			"Request for Proposal Item": {
+				"doctype": "Custom Comparison Item",
+				"field_map": [
+					["name", "request_for_proposal_item"],
+					["item_code", "item_code"],
+					["item_name", "item_name"],
+					["description", "description"],
+					["uom", "uom"],
+					["qty", "qty"],
+					["warehouse", "warehouse"],
+					["project", "project"],
+					["cost_center", "cost_center"],
+				],
+			},
+		},
+		target_doc,
+		postprocess,
+	)
+
+
+@frappe.whitelist()
 def make_purchase_order(source_name, supplier=None, item_rows=None):
 	comparison = frappe.get_doc("Custom Comparison", source_name)
+	ensure_po_allowed(comparison)
 
 	if comparison.docstatus != 1:
 		frappe.throw(_("Custom Comparison must be submitted before creating Purchase Order"))
@@ -391,6 +608,7 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 	po.company = comparison.company
 	po.transaction_date = comparison.transaction_date
 	po.schedule_date = nowdate()
+	po.custom_comparison = comparison.name
 
 	po.buying_price_list = get_buying_price_list(comparison, po_items[0]["item"])
 
@@ -406,6 +624,7 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 @frappe.whitelist()
 def make_purchase_orders_for_selected(source_name, item_rows=None):
 	comparison = frappe.get_doc("Custom Comparison", source_name)
+	ensure_po_allowed(comparison)
 
 	if comparison.docstatus != 1:
 		frappe.throw(_("Custom Comparison must be submitted before creating Purchase Order"))
@@ -447,6 +666,7 @@ def make_purchase_orders_for_selected(source_name, item_rows=None):
 		po.company = comparison.company
 		po.transaction_date = comparison.transaction_date
 		po.schedule_date = nowdate()
+		po.custom_comparison = comparison.name
 
 		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
 
@@ -465,6 +685,7 @@ def make_purchase_orders_for_selected(source_name, item_rows=None):
 @frappe.whitelist()
 def make_purchase_orders_for_all(source_name):
 	comparison = frappe.get_doc("Custom Comparison", source_name)
+	ensure_po_allowed(comparison)
 
 	if comparison.docstatus != 1:
 		frappe.throw(_("Custom Comparison must be submitted before creating Purchase Order"))
@@ -494,6 +715,7 @@ def make_purchase_orders_for_all(source_name):
 		po.company = comparison.company
 		po.transaction_date = comparison.transaction_date
 		po.schedule_date = nowdate()
+		po.custom_comparison = comparison.name
 
 		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
 

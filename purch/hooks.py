@@ -47,6 +47,13 @@ required_apps = ["erpnext"]
 doctype_js = {
 	"Custom Comparison": "public/js/custom_comparison.js",
 	"Material Request": "public/js/material_request.js",
+	"Purchase Order": "public/js/purchase_order.js",
+}
+
+override_doctype_dashboards = {
+	"Material Request": "purch.overrides.dashboard_overrides.get_dashboard_for_material_request",
+	"Purchase Order": "purch.overrides.dashboard_overrides.get_dashboard_for_purchase_order",
+	"Request for Proposal": "purch.overrides.dashboard_overrides.get_dashboard_for_request_for_proposal",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}

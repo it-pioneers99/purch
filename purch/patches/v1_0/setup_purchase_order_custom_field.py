@@ -3,6 +3,6 @@ import frappe
 from purch.custom_fields import setup_custom_fields
 
 
-def after_install():
+def execute():
 	setup_custom_fields()
-	frappe.clear_cache()
+	frappe.clear_cache(doctype="Purchase Order")

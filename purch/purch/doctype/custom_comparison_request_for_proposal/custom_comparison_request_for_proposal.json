@@ -1,24 +1,24 @@
 {
  "actions": [],
- "creation": "2026-06-18 00:00:00.000000",
+ "creation": "2026-06-22 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "material_request",
+  "request_for_proposal",
   "transaction_date",
   "status"
  ],
  "fields": [
   {
-   "fieldname": "material_request",
+   "fieldname": "request_for_proposal",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Material Request",
-   "options": "Material Request"
+   "label": "Request for Proposal",
+   "options": "Request for Proposal"
   },
   {
-   "fetch_from": "material_request.transaction_date",
+   "fetch_from": "request_for_proposal.transaction_date",
    "fieldname": "transaction_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -26,7 +26,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "material_request.status",
+   "fetch_from": "request_for_proposal.status",
    "fieldname": "status",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -37,10 +37,10 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-18 00:00:00.000000",
+ "modified": "2026-06-22 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Purch",
- "name": "Custom Comparison Material Request",
+ "name": "Custom Comparison Request for Proposal",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
