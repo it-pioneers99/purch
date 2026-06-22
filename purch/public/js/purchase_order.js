@@ -3,12 +3,23 @@
 
 frappe.ui.form.on("Purchase Order", {
 	refresh(frm) {
-		if (!frm.doc.custom_comparison) {
-			return;
-		}
-
-		frm.add_custom_button(__("Custom Comparison"), () => {
-			frappe.set_route("Form", "Custom Comparison", frm.doc.custom_comparison);
-		}, __("View"));
+		setup_custom_comparison_connection(frm);
 	},
 });
+
+function setup_custom_comparison_connection(frm) {
+	if (frm.dashboard) {
+		frm.dashboard.add_transactions({
+			label: __("Reference"),
+			items: ["Custom Comparison"],
+		});
+	}
+
+	if (!frm.doc.custom_comparison) {
+		return;
+	}
+
+	frm.add_custom_button(__("Custom Comparison"), () => {
+		frappe.set_route("Form", "Custom Comparison", frm.doc.custom_comparison);
+	}, __("View"));
+}

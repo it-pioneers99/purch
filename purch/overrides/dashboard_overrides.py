@@ -25,7 +25,8 @@ def get_dashboard_for_purchase_order(data):
 	data.internal_links = internal_links
 
 	for group in data.get("transactions", []):
-		if _(group.get("label")) == _("Reference"):
+		label = group.get("label")
+		if label in ("Reference", "Related") or _(label) in (_("Reference"), _("Related")):
 			items = group.get("items", [])
 			if "Custom Comparison" not in items:
 				items.append("Custom Comparison")
