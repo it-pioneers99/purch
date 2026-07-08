@@ -76,22 +76,32 @@ class CustomComparison(Document):
 
 	def set_item_amounts(self, item, supplier_list):
 		qty = flt(item.qty)
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else None
 		for idx, field in enumerate(AMOUNT_FIELDS):
 			if idx < len(supplier_list):
-				rate = flt(item.get(PRICE_FIELDS[idx]))
-				item.set(field, rate * qty)
+				price_field = PRICE_FIELDS[idx]
+				rate_precision = frappe.get_precision(item.doctype, price_field, currency=currency)
+				amount_precision = frappe.get_precision(item.doctype, field, currency=currency)
+
+				rate = flt(item.get(price_field), precision=rate_precision)
+				amount = flt(rate * qty, precision=amount_precision)
+				item.set(field, amount)
 			else:
 				item.set(field, 0)
 
 	def update_supplier_totals(self):
 		supplier_list = [row.supplier for row in self.suppliers if row.supplier]
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else None
+		total_precision = frappe.get_precision("Custom Comparison Supplier", "total_amount", currency=currency)
 
 		for idx, supplier_row in enumerate(self.suppliers):
 			if idx < len(supplier_list):
+				price_field = PRICE_FIELDS[idx]
+				rate_precision = frappe.get_precision("Custom Comparison Item", price_field, currency=currency)
 				total = sum(
-					flt(item.get(PRICE_FIELDS[idx])) * flt(item.qty) for item in self.items
+					flt(item.get(price_field), precision=rate_precision) * flt(item.qty) for item in self.items
 				)
-				supplier_row.total_amount = total
+				supplier_row.total_amount = flt(total, precision=total_precision)
 			else:
 				supplier_row.total_amount = 0
 
@@ -120,7 +130,9 @@ class CustomComparison(Document):
 			item.selected_rate = 0
 			return
 
-		item.selected_rate = flt(item.get(PRICE_FIELDS[supplier_idx]))
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else None
+		selected_rate_precision = frappe.get_precision(item.doctype, "selected_rate", currency=currency)
+		item.selected_rate = flt(item.get(PRICE_FIELDS[supplier_idx]), precision=selected_rate_precision)
 
 	def on_submit(self):
 		self.status = "Submitted"
