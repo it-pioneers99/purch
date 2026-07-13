@@ -162,34 +162,8 @@
  "links": [
   {
    "group": "Reference",
-   "link_doctype": "Material Request",
-   "link_fieldname": "material_request"
-  },
-  {
-   "group": "Reference",
-   "is_child_table": 1,
-   "link_doctype": "Material Request",
-   "link_fieldname": "material_request",
-   "parent_doctype": "Material Request",
-   "table_fieldname": "material_requests"
-  },
-  {
-   "group": "Reference",
    "link_doctype": "Purchase Order",
    "link_fieldname": "custom_comparison"
-  },
-  {
-   "group": "Reference",
-   "link_doctype": "Request for Proposal",
-   "link_fieldname": "request_for_proposal"
-  },
-  {
-   "group": "Reference",
-   "is_child_table": 1,
-   "link_doctype": "Request for Proposal",
-   "link_fieldname": "request_for_proposal",
-   "parent_doctype": "Request for Proposal",
-   "table_fieldname": "request_for_proposals"
   }
  ],
  "modified": "2026-06-15 00:00:00.000000",
