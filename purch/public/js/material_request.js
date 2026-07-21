@@ -3,6 +3,10 @@
 
 frappe.ui.form.on("Material Request", {
 	refresh(frm) {
+		if (frm.doc.docstatus === 1) {
+			frm.set_df_property("request_status", "read_only", 0);
+		}
+
 		if (frm.doc.docstatus !== 1 || frm.doc.status === "Stopped") {
 			return;
 		}

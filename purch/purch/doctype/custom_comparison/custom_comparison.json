@@ -19,8 +19,23 @@
   "request_for_proposal",
   "column_break_1",
   "status",
+  "created_date",
+  "approved_date",
   "suppliers_section",
   "suppliers",
+  "supplier_totals_section",
+  "total_amount_1",
+  "total_amount_2",
+  "total_amount_3",
+  "total_amount_4",
+  "total_amount_5",
+  "column_break_supplier_totals",
+  "total_amount_6",
+  "total_amount_7",
+  "total_amount_8",
+  "total_amount_9",
+  "total_amount_10",
+  "cost_save",
   "items_section",
   "items",
   "amended_from"
@@ -122,6 +137,21 @@
    "read_only": 1
   },
   {
+   "fieldname": "created_date",
+   "fieldtype": "Date",
+   "label": "Created Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "approved_date",
+   "fieldtype": "Date",
+   "label": "Approved Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "suppliers_section",
    "fieldtype": "Section Break",
    "label": "Suppliers"
@@ -132,6 +162,91 @@
    "label": "Suppliers",
    "options": "Custom Comparison Supplier",
    "reqd": 1
+  },
+  {
+   "fieldname": "supplier_totals_section",
+   "fieldtype": "Section Break",
+   "label": "Supplier Totals"
+  },
+  {
+   "fieldname": "total_amount_1",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_2",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_3",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_4",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_5",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_supplier_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_amount_6",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 6",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_7",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 7",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_8",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 8",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_9",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_10",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Total Amount 10",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_save",
+   "fieldtype": "Currency",
+   "label": "Cost Save",
+   "read_only": 1
   },
   {
    "fieldname": "items_section",

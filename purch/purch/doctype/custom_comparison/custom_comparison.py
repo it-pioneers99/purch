@@ -7,17 +7,22 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate
+from frappe.utils import flt, fmt_money, getdate, nowdate
 
 MAX_SUPPLIERS = 10
 PRICE_FIELDS = [f"price_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 AMOUNT_FIELDS = [f"amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
+TOTAL_AMOUNT_FIELDS = [f"total_amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 COMPARISON_TYPE_MR = "Material Request"
 COMPARISON_TYPE_RFP = "Request For Proposal"
 
 
 class CustomComparison(Document):
+	def before_insert(self):
+		self.set_created_date()
+
 	def validate(self):
+		self.set_created_date()
 		self.validate_suppliers()
 		if self.is_material_request_comparison():
 			self.validate_material_requests()
@@ -25,6 +30,15 @@ class CustomComparison(Document):
 			self.validate_request_for_proposals()
 		self.update_item_prices()
 		self.update_supplier_totals()
+		self.update_cost_save()
+
+	def set_created_date(self):
+		if self.created_date:
+			return
+		if self.creation:
+			self.created_date = getdate(self.creation)
+		else:
+			self.created_date = nowdate()
 
 	def is_material_request_comparison(self):
 		return (self.comparison_type or COMPARISON_TYPE_MR) == COMPARISON_TYPE_MR
@@ -105,6 +119,29 @@ class CustomComparison(Document):
 			else:
 				supplier_row.total_amount = 0
 
+		self.sync_supplier_total_amount_fields()
+
+	def sync_supplier_total_amount_fields(self):
+		supplier_rows = [row for row in self.suppliers if row.supplier]
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else None
+
+		for idx, fieldname in enumerate(TOTAL_AMOUNT_FIELDS):
+			if idx < len(supplier_rows):
+				self.set(fieldname, fmt_money(flt(supplier_rows[idx].total_amount), currency=currency))
+			else:
+				self.set(fieldname, None)
+
+	def update_cost_save(self):
+		totals = [flt(row.total_amount) for row in self.suppliers if flt(row.total_amount) > 0]
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else None
+		precision = frappe.get_precision(self.doctype, "cost_save", currency=currency)
+
+		if len(totals) < 2:
+			self.cost_save = 0
+			return
+
+		self.cost_save = flt(max(totals) - min(totals), precision=precision)
+
 	def set_lowest_price(self, item, supplier_list):
 		lowest_rate = None
 		lowest_supplier = None
@@ -136,9 +173,12 @@ class CustomComparison(Document):
 
 	def on_submit(self):
 		self.status = "Submitted"
+		if not self.approved_date:
+			self.db_set("approved_date", nowdate(), update_modified=False)
 
 	def on_cancel(self):
 		self.status = "Cancelled"
+		self.db_set("approved_date", None, update_modified=False)
 
 
 def get_supplier_list(doc):
