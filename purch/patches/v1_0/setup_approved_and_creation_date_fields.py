@@ -1,0 +1,9 @@
+import frappe
+
+from purch.custom_fields import setup_custom_fields
+
+
+def execute():
+	setup_custom_fields()
+	frappe.clear_cache(doctype="Purchase Order")
+	frappe.clear_cache(doctype="Material Request")

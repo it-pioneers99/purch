@@ -139,6 +139,7 @@ frappe.ui.form.on("Custom Comparison Item", {
 const MAX_SUPPLIERS = 10;
 const PRICE_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `price_${i + 1}`);
 const AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `amount_${i + 1}`);
+const TOTAL_AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `total_amount_${i + 1}`);
 const COMPARISON_TYPE_MR = "Material Request";
 const COMPARISON_TYPE_RFP = "Request For Proposal";
 
@@ -290,6 +291,39 @@ function update_supplier_totals(frm) {
 	});
 
 	frm.refresh_field("suppliers");
+	update_parent_supplier_total_amounts(frm);
+	update_cost_save(frm);
+}
+
+function update_parent_supplier_total_amounts(frm) {
+	const supplier_list = get_supplier_list(frm);
+
+	TOTAL_AMOUNT_FIELDS.forEach((fieldname, idx) => {
+		const supplier = supplier_list[idx];
+		const has_supplier = Boolean(supplier);
+		const total = has_supplier ? get_supplier_total(frm, idx) : "";
+		const label = has_supplier
+			? __("Total {0}", [get_supplier_name(frm, supplier)])
+			: __("Total Amount {0}", [idx + 1]);
+
+		frm.set_df_property(fieldname, "label", label);
+		frm.set_df_property(fieldname, "hidden", has_supplier ? 0 : 1);
+		frm.doc[fieldname] = has_supplier ? format_currency(total) : "";
+		frm.refresh_field(fieldname);
+	});
+}
+
+function update_cost_save(frm) {
+	const totals = (frm.doc.suppliers || [])
+		.map((row) => flt(row.total_amount))
+		.filter((total) => total > 0);
+
+	let cost_save = 0;
+	if (totals.length >= 2) {
+		cost_save = Math.max(...totals) - Math.min(...totals);
+	}
+
+	frm.set_value("cost_save", cost_save);
 }
 
 function update_row_price_summary(frm, cdt, cdn) {

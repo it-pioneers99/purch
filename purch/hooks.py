@@ -148,13 +148,18 @@ after_install = "purch.install.after_install"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Purchase Order": {
+		"before_insert": "purch.document_events.set_creation_date",
+		"validate": "purch.document_events.set_creation_date",
+		"on_submit": "purch.document_events.set_approved_date_on_submit",
+		"on_cancel": "purch.document_events.clear_approved_date_on_cancel",
+	},
+	"Material Request": {
+		"on_submit": "purch.document_events.set_approved_date_on_submit",
+		"on_cancel": "purch.document_events.clear_approved_date_on_cancel",
+	},
+}
 
 # Scheduled Tasks
 # ---------------
