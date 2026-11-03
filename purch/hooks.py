@@ -198,10 +198,10 @@ doc_events = {
 
 # Overriding Methods
 # ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "purch.event.get_events"
-# }
+
+override_whitelisted_methods = {
+	"frappe.desk.notifications.get_open_count": "purch.overrides.linked_documents.get_open_count",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

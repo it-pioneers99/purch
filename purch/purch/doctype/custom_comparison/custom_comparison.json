@@ -40,6 +40,7 @@
   "cost_save",
   "items_section",
   "items",
+  "connections_tab",
   "amended_from"
  ],
  "fields": [
@@ -277,6 +278,12 @@
    "label": "Items",
    "options": "Custom Comparison Item",
    "reqd": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   },
   {
    "fieldname": "amended_from",
