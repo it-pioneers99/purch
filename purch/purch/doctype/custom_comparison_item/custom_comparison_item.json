@@ -58,118 +58,117 @@
    "label": "Select"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item Code",
    "options": "Item",
-   "reqd": 1,
-   "allow_on_submit": 1
+   "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Item Name",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "UOM",
-   "options": "UOM",
-   "reqd": 1,
-   "allow_on_submit": 1
+   "options": "UOM"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Qty",
-   "reqd": 1,
-   "allow_on_submit": 1
+   "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "warehouse",
    "fieldtype": "Link",
    "label": "Warehouse",
-   "options": "Warehouse",
-   "allow_on_submit": 1
+   "options": "Warehouse"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
-   "options": "Project",
-   "allow_on_submit": 1
+   "options": "Project"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cost Center",
-   "options": "Cost Center",
-   "allow_on_submit": 1
+   "options": "Cost Center"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "budget_expense_item",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Budget Expense Item",
-   "options": "Budget Expense Item",
-   "allow_on_submit": 1
+   "options": "Budget Expense Item"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "budget_expense_detail_description",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Budget Expense Detail Description",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "description",
    "fieldtype": "Text Editor",
-   "label": "Description",
-   "allow_on_submit": 1
+   "label": "Description"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "material_request",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Material Request",
    "options": "Material Request",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "material_request_item",
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Material Request Item",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "request_for_proposal",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Request for Proposal",
    "options": "Request for Proposal",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "request_for_proposal_item",
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Request for Proposal Item",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_prices",
@@ -178,9 +177,11 @@
   },
   {
    "allow_on_submit": 1,
+   "bold": 1,
    "fieldname": "price_1",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "in_preview": 1,
    "label": "Price Supplier 1"
   },
   {
@@ -188,6 +189,7 @@
    "fieldname": "price_2",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "in_preview": 1,
    "label": "Price Supplier 2"
   },
   {
@@ -247,82 +249,83 @@
    "label": "Price Supplier 10"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "column_break_amounts",
    "fieldtype": "Column Break",
    "label": "Supplier Totals"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_1",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Supplier 1",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_2",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Supplier 2",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_3",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Supplier 3",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_4",
    "fieldtype": "Currency",
    "label": "Total Supplier 4",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_5",
    "fieldtype": "Currency",
    "label": "Total Supplier 5",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_6",
    "fieldtype": "Currency",
    "label": "Total Supplier 6",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_7",
    "fieldtype": "Currency",
    "label": "Total Supplier 7",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_8",
    "fieldtype": "Currency",
    "label": "Total Supplier 8",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_9",
    "fieldtype": "Currency",
    "label": "Total Supplier 9",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_10",
    "fieldtype": "Currency",
    "label": "Total Supplier 10",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "section_break_selection",
@@ -338,34 +341,34 @@
    "options": "Supplier"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "selected_rate",
    "fieldtype": "Currency",
    "label": "Selected Rate",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "lowest_supplier",
    "fieldtype": "Link",
    "label": "Lowest Supplier",
    "options": "Supplier",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "lowest_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Lowest Rate",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-07-08 12:56:15.240675",
- "modified_by": "ahmed.moutaz@mznnajd.com",
+ "modified": "2026-07-31 18:16:48.935289",
+ "modified_by": "Administrator",
  "module": "Purch",
  "name": "Custom Comparison Item",
  "owner": "Administrator",
