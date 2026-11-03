@@ -11,6 +11,8 @@
   "company",
   "comparison_type",
   "transaction_date",
+  "budget_expense_type",
+  "request_type",
   "material_requests_section",
   "material_requests",
   "material_request",
@@ -77,6 +79,20 @@
    "in_list_view": 1,
    "label": "Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "budget_expense_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Budget Expense Type",
+   "options": "Projects\nNot Projects"
+  },
+  {
+   "fieldname": "request_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Request Type",
+   "options": "Civil\nMechanic\nelectric\nStationary\nothers"
   },
   {
    "depends_on": "eval:doc.comparison_type==\"Material Request\"",

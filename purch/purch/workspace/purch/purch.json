@@ -16,7 +16,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Purchase Comparison",
-   "link_count": 2,
+   "link_count": 4,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -37,6 +37,44 @@
    "link_count": 0,
    "link_to": "Request for Proposal",
    "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Task Log",
+   "link_count": 0,
+   "link_to": "Task Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Task Log Change",
+   "link_count": 0,
+   "link_to": "Task Log Change",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 1,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tracking Sheet Purchase Agreement Payment Schedule",
+   "link_count": 0,
+   "link_to": "Tracking Sheet Purchase Agreement Payment Schedule",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
@@ -66,6 +104,26 @@
    "label": "Request for Proposal",
    "link_to": "Request for Proposal",
    "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Task Log",
+   "link_to": "Task Log",
+   "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "List",
+   "label": "Task Log Change",
+   "link_to": "Task Log Change",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "label": "PO Payment Schedule Tracking",
+   "link_to": "Tracking Sheet Purchase Agreement Payment Schedule",
+   "type": "Report"
   }
  ],
  "title": "Purch"

@@ -13,6 +13,8 @@
   "warehouse",
   "project",
   "cost_center",
+  "budget_expense_item",
+  "budget_expense_detail_description",
   "description",
   "material_request",
   "material_request_item",
@@ -111,6 +113,22 @@
    "in_list_view": 1,
    "label": "Cost Center",
    "options": "Cost Center",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "budget_expense_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Budget Expense Item",
+   "options": "Budget Expense Item",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "budget_expense_detail_description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Budget Expense Detail Description",
+   "read_only": 1,
    "allow_on_submit": 1
   },
   {

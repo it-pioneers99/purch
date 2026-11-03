@@ -19,6 +19,15 @@ CUSTOM_FIELDS = [
 	},
 	{
 		"dt": "Purchase Order",
+		"fieldname": "purchase_agreement",
+		"label": "Purchase Agreement",
+		"fieldtype": "Data",
+		"insert_after": "custom_comparison",
+		"allow_on_submit": 1,
+		"in_standard_filter": 1,
+	},
+	{
+		"dt": "Purchase Order",
 		"fieldname": "creation_date",
 		"label": "Creation Date",
 		"fieldtype": "Date",

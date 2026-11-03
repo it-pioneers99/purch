@@ -16,6 +16,15 @@ TOTAL_AMOUNT_FIELDS = [f"total_amount_{i}" for i in range(1, MAX_SUPPLIERS + 1)]
 COMPARISON_TYPE_MR = "Material Request"
 COMPARISON_TYPE_RFP = "Request For Proposal"
 
+MR_HEADER_FIELDS = ("budget_expense_type", "request_type")
+MR_ITEM_COPY_FIELDS = (
+	"budget_expense_item",
+	"budget_expense_detail_description",
+	"phc_cost_center_allocations_json",
+	"phc_cost_center_allocation_summary",
+)
+PO_REQUEST_TYPE_FIELD = "custom_request_type"
+
 
 class CustomComparison(Document):
 	def before_insert(self):
@@ -210,9 +219,88 @@ def get_item_rate(item, supplier, supplier_list):
 	return flt(item.get(PRICE_FIELDS[idx]))
 
 
+def meta_has_field(doctype, fieldname):
+	return fieldname in frappe.get_meta(doctype).get_fieldnames_with_value()
+
+
+def copy_document_fields(source_doc, target_doc, fieldnames):
+	for fieldname in fieldnames:
+		if not meta_has_field(source_doc.doctype, fieldname):
+			continue
+		if not meta_has_field(target_doc.doctype, fieldname):
+			continue
+		target_doc.set(fieldname, source_doc.get(fieldname))
+
+
+def get_mr_item_copied_fields(mr_item):
+	values = {}
+	for fieldname in MR_ITEM_COPY_FIELDS:
+		if meta_has_field("Material Request Item", fieldname):
+			values[fieldname] = mr_item.get(fieldname)
+	return values
+
+
+def sync_comparison_header_from_mr(comparison, mr):
+	for fieldname in MR_HEADER_FIELDS:
+		if not meta_has_field("Material Request", fieldname):
+			continue
+		if not meta_has_field(comparison.doctype, fieldname):
+			continue
+
+		mr_value = mr.get(fieldname)
+		if not mr_value:
+			continue
+
+		current = comparison.get(fieldname)
+		if not current:
+			comparison.set(fieldname, mr_value)
+		elif current != mr_value:
+			frappe.throw(
+				_(
+					"Material Request {0} has {1} = {2}, which does not match the comparison value {3}."
+				).format(mr.name, frappe.bold(fieldname), mr_value, current)
+			)
+
+
+def set_po_header_from_comparison(po, comparison):
+	if meta_has_field("Purchase Order", "budget_expense_type"):
+		po.budget_expense_type = comparison.get("budget_expense_type")
+
+	request_type = comparison.get("request_type")
+	if request_type:
+		if meta_has_field("Purchase Order", PO_REQUEST_TYPE_FIELD):
+			po.set(PO_REQUEST_TYPE_FIELD, request_type)
+		elif meta_has_field("Purchase Order", "request_type"):
+			po.request_type = request_type
+
+
+def get_po_item_field_values(comparison_item):
+	values = {}
+	for fieldname in MR_ITEM_COPY_FIELDS:
+		if comparison_item.get(fieldname):
+			values[fieldname] = comparison_item.get(fieldname)
+
+	missing = [
+		fieldname
+		for fieldname in MR_ITEM_COPY_FIELDS
+		if fieldname not in values and meta_has_field("Purchase Order Item", fieldname)
+	]
+	if missing and comparison_item.material_request_item:
+		mr_values = frappe.db.get_value(
+			"Material Request Item",
+			comparison_item.material_request_item,
+			missing,
+			as_dict=True,
+		)
+		if mr_values:
+			values.update({fieldname: value for fieldname, value in mr_values.items() if value})
+
+	return values
+
+
 def get_po_item_dict(item, comparison, rate):
 	mr_name = item.material_request or comparison.material_request
-	return {
+	row = {
 		"item_code": item.item_code,
 		"item_name": item.item_name,
 		"description": item.description,
@@ -227,6 +315,10 @@ def get_po_item_dict(item, comparison, rate):
 		"material_request_item": item.material_request_item,
 		"schedule_date": nowdate(),
 	}
+	for fieldname, value in get_po_item_field_values(item).items():
+		if meta_has_field("Purchase Order Item", fieldname):
+			row[fieldname] = value
+	return row
 
 
 def get_buying_price_list(comparison, item=None):
@@ -258,7 +350,7 @@ def validate_material_request_for_comparison(mr, company=None):
 
 
 def get_comparison_item_from_mr_item(mr_item, mr_name):
-	return {
+	row = {
 		"item_code": mr_item.item_code,
 		"item_name": mr_item.item_name,
 		"description": mr_item.description,
@@ -273,6 +365,8 @@ def get_comparison_item_from_mr_item(mr_item, mr_name):
 		"selected_rate": 0,
 		**{field: 0 for field in PRICE_FIELDS + AMOUNT_FIELDS},
 	}
+	row.update(get_mr_item_copied_fields(mr_item))
+	return row
 
 
 def get_existing_mr_item_keys(comparison):
@@ -294,6 +388,7 @@ def get_linked_material_requests(comparison):
 def append_material_request_items(comparison, mr_name, skip_existing=True):
 	mr = frappe.get_doc("Material Request", mr_name)
 	validate_material_request_for_comparison(mr, comparison.company)
+	sync_comparison_header_from_mr(comparison, mr)
 
 	existing_items = get_existing_mr_item_keys(comparison) if skip_existing else set()
 	added_items = 0
@@ -511,13 +606,21 @@ def make_from_material_request(source_name, target_doc=None):
 		target.company = source.company
 		target.transaction_date = source.transaction_date or nowdate()
 		target.append("material_requests", {"material_request": source.name})
+		copy_document_fields(source, target, MR_HEADER_FIELDS)
 
+		mr_items_by_name = {row.name: row for row in source.items}
 		for item in target.items:
 			item.material_request = source.name
 			item.selected_supplier = None
 			item.selected_rate = 0
 			for field in PRICE_FIELDS + AMOUNT_FIELDS:
 				item.set(field, 0)
+
+			mr_item = mr_items_by_name.get(item.material_request_item)
+			if mr_item:
+				for fieldname, value in get_mr_item_copied_fields(mr_item).items():
+					if meta_has_field(item.doctype, fieldname):
+						item.set(fieldname, value)
 
 	return get_mapped_doc(
 		"Material Request",
@@ -529,7 +632,11 @@ def make_from_material_request(source_name, target_doc=None):
 					"docstatus": ["=", 1],
 					"material_request_type": ["=", "Purchase"],
 				},
-				"field_map": [["name", "material_request"]],
+				"field_map": [
+					["name", "material_request"],
+					["budget_expense_type", "budget_expense_type"],
+					["request_type", "request_type"],
+				],
 			},
 			"Material Request Item": {
 				"doctype": "Custom Comparison Item",
@@ -543,6 +650,8 @@ def make_from_material_request(source_name, target_doc=None):
 					["warehouse", "warehouse"],
 					["project", "project"],
 					["cost_center", "cost_center"],
+					["budget_expense_item", "budget_expense_item"],
+					["budget_expense_detail_description", "budget_expense_detail_description"],
 				],
 			},
 		},
@@ -661,6 +770,7 @@ def make_purchase_order(source_name, supplier=None, item_rows=None):
 	po.transaction_date = comparison.transaction_date
 	po.schedule_date = nowdate()
 	po.custom_comparison = comparison.name
+	set_po_header_from_comparison(po, comparison)
 
 	po.buying_price_list = get_buying_price_list(comparison, po_items[0]["item"])
 
@@ -719,6 +829,7 @@ def make_purchase_orders_for_selected(source_name, item_rows=None):
 		po.transaction_date = comparison.transaction_date
 		po.schedule_date = nowdate()
 		po.custom_comparison = comparison.name
+		set_po_header_from_comparison(po, comparison)
 
 		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
 
@@ -768,6 +879,7 @@ def make_purchase_orders_for_all(source_name):
 		po.transaction_date = comparison.transaction_date
 		po.schedule_date = nowdate()
 		po.custom_comparison = comparison.name
+		set_po_header_from_comparison(po, comparison)
 
 		po.buying_price_list = get_buying_price_list(comparison, rows[0]["item"])
 
