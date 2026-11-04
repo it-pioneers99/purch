@@ -25,7 +25,10 @@ def _append_transaction_item(data, doctype, anchor_items=None):
 
 def get_dashboard_for_material_request(data):
 	data = frappe._dict(data)
-	_append_transaction_item(data, "Custom Comparison")
+	internal_links = data.get("internal_links") or {}
+	internal_links.setdefault("Purchase Order", ["items", "material_request"])
+	data.internal_links = internal_links
+	_append_transaction_item(data, "Custom Comparison", anchor_items=("Purchase Order",))
 	return data
 
 
@@ -35,6 +38,13 @@ def get_dashboard_for_purchase_order(data):
 	internal_links = data.get("internal_links") or {}
 	internal_links["Custom Comparison"] = "custom_comparison"
 	data.internal_links = internal_links
+
+	for group in data.get("transactions", []):
+		if _(group.get("label")) == _("Reference"):
+			items = group.get("items", [])
+			for doctype in ("Material Request", "Custom Comparison"):
+				if doctype not in items:
+					items.append(doctype)
 
 	_append_transaction_item(
 		data,

@@ -20,8 +20,8 @@ MR_HEADER_FIELDS = ("budget_expense_type", "request_type")
 MR_ITEM_COPY_FIELDS = (
 	"budget_expense_item",
 	"budget_expense_detail_description",
-	"phc_cost_center_allocations_json",
-	"phc_cost_center_allocation_summary",
+	"phc_budget_expense_item_split_json",
+	"phc_budget_expense_item_split_summary",
 )
 PO_REQUEST_TYPE_FIELD = "custom_request_type"
 

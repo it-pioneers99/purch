@@ -8,13 +8,16 @@ def get_data():
 	return {
 		"fieldname": "custom_comparison",
 		"internal_links": {
-			"Material Request": ["items", "material_request"],
-			"Request for Proposal": ["items", "request_for_proposal"],
+			"Material Request": ["material_requests", "material_request"],
+			"Request for Proposal": ["request_for_proposals", "request_for_proposal"],
 		},
 		"non_standard_fieldnames": {
 			"Purchase Order": "custom_comparison",
 		},
 		"transactions": [
-			{"label": _("Reference"), "items": ["Material Request", "Request for Proposal", "Purchase Order"]},
+			{
+				"label": _("Reference"),
+				"items": ["Material Request", "Request for Proposal", "Purchase Order"],
+			},
 		],
 	}

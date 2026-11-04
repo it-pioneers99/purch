@@ -8,10 +8,10 @@ frappe.ui.form.on("Purchase Order", {
 });
 
 function setup_custom_comparison_connection(frm) {
-	if (frm.dashboard) {
+	if (frm.dashboard && !frm.is_new()) {
 		frm.dashboard.add_transactions({
 			label: __("Reference"),
-			items: ["Custom Comparison"],
+			items: ["Custom Comparison", "Material Request"],
 		});
 	}
 

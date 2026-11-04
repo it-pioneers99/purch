@@ -34,7 +34,9 @@ def _enrich_material_request_connections(count, material_request):
 
 def _enrich_custom_comparison_connections(count, comparison_name):
 	mr_names = _get_material_requests_for_custom_comparison(comparison_name)
+	po_names = _get_purchase_orders_for_custom_comparison(comparison_name)
 	_set_named_internal_link(count, "Material Request", mr_names)
+	_set_named_internal_link(count, "Purchase Order", po_names)
 
 
 def _enrich_purchase_order_connections(count, purchase_order):
@@ -101,6 +103,18 @@ def _get_custom_comparisons_for_material_request(material_request):
 		select distinct parent from `tabCustom Comparison Item` where material_request = %s
 		""",
 		(material_request, material_request, material_request),
+		pluck=True,
+	)
+
+
+def _get_purchase_orders_for_custom_comparison(comparison_name):
+	return frappe.db.sql(
+		"""
+		select distinct name
+		from `tabPurchase Order`
+		where custom_comparison = %s
+		""",
+		comparison_name,
 		pluck=True,
 	)
 

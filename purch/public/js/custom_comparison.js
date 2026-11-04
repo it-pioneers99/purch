@@ -30,6 +30,7 @@ frappe.ui.form.on("Custom Comparison", {
 
 	refresh(frm) {
 		toggle_comparison_source_fields(frm);
+		setup_purch_connections_dashboard(frm);
 		setup_custom_buttons(frm);
 		if (frm.fields_dict.items?.grid) {
 			update_supplier_price_columns(frm);
@@ -142,6 +143,17 @@ const AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `amount_${
 const TOTAL_AMOUNT_FIELDS = Array.from({ length: MAX_SUPPLIERS }, (_, i) => `total_amount_${i + 1}`);
 const COMPARISON_TYPE_MR = "Material Request";
 const COMPARISON_TYPE_RFP = "Request For Proposal";
+
+function setup_purch_connections_dashboard(frm) {
+	if (frm.is_new() || !frm.dashboard) {
+		return;
+	}
+
+	frm.dashboard.add_transactions({
+		label: __("Reference"),
+		items: ["Material Request", "Purchase Order"],
+	});
+}
 
 function is_material_request_comparison(frm) {
 	return (frm.doc.comparison_type || COMPARISON_TYPE_MR) === COMPARISON_TYPE_MR;

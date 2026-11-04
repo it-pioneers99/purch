@@ -7,6 +7,8 @@ frappe.ui.form.on("Material Request", {
 			frm.set_df_property("request_status", "read_only", 0);
 		}
 
+		setup_purch_connections_dashboard(frm);
+
 		if (frm.doc.docstatus !== 1 || frm.doc.status === "Stopped") {
 			return;
 		}
@@ -15,7 +17,7 @@ frappe.ui.form.on("Material Request", {
 			return;
 		}
 
-		frm.add_custom_button(__("Custom Comparison"), () => {
+		frm.add_custom_button(__("Create Comparison"), () => {
 			frappe.model.open_mapped_doc({
 				method:
 					"purch.purch.doctype.custom_comparison.custom_comparison.make_from_material_request",
@@ -25,3 +27,14 @@ frappe.ui.form.on("Material Request", {
 		}, __("Create"));
 	},
 });
+
+function setup_purch_connections_dashboard(frm) {
+	if (frm.is_new() || !frm.dashboard) {
+		return;
+	}
+
+	frm.dashboard.add_transactions({
+		label: __("Reference"),
+		items: ["Custom Comparison", "Purchase Order"],
+	});
+}
