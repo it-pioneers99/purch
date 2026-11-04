@@ -43,6 +43,9 @@ def log_document_change(doc, method=None):
 	if doc.doctype in SKIP_DOCTYPES or frappe.get_meta(doc.doctype).istable:
 		return
 
+	if method == "on_trash":
+		return
+
 	action = _get_action(doc, method)
 	if not action:
 		return

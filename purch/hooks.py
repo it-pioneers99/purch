@@ -156,7 +156,6 @@ doc_events = {
 		"on_update_after_submit": "purch.task_log_tracker.log_document_change",
 		"on_submit": "purch.task_log_tracker.log_document_change",
 		"on_cancel": "purch.task_log_tracker.log_document_change",
-		"on_trash": "purch.task_log_tracker.log_document_change",
 	},
 	"Purchase Order": {
 		"before_insert": "purch.document_events.set_creation_date",
@@ -217,7 +216,7 @@ override_whitelisted_methods = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["Task Log", "Task Log Change"]
 
 # Request Events
 # ----------------

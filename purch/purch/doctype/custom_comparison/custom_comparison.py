@@ -23,6 +23,10 @@ MR_ITEM_COPY_FIELDS = (
 	"phc_budget_expense_item_split_json",
 	"phc_budget_expense_item_split_summary",
 )
+SPLIT_COPY_FIELDS = (
+	"phc_budget_expense_item_split_json",
+	"phc_budget_expense_item_split_summary",
+)
 PO_REQUEST_TYPE_FIELD = "custom_request_type"
 
 
@@ -233,10 +237,18 @@ def copy_document_fields(source_doc, target_doc, fieldnames):
 
 
 def get_mr_item_copied_fields(mr_item):
+	from phc_projects.phc_projects.budget_expense_item_split import compact_split_json_string
+
 	values = {}
 	for fieldname in MR_ITEM_COPY_FIELDS:
-		if meta_has_field("Material Request Item", fieldname):
-			values[fieldname] = mr_item.get(fieldname)
+		if not meta_has_field("Material Request Item", fieldname):
+			continue
+		value = mr_item.get(fieldname)
+		if value is None or value == "":
+			continue
+		if fieldname == "phc_budget_expense_item_split_json":
+			value = compact_split_json_string(value)
+		values[fieldname] = value
 	return values
 
 
@@ -275,10 +287,18 @@ def set_po_header_from_comparison(po, comparison):
 
 
 def get_po_item_field_values(comparison_item):
+	from phc_projects.phc_projects.budget_expense_item_split import compact_split_json_string
+
 	values = {}
 	for fieldname in MR_ITEM_COPY_FIELDS:
-		if comparison_item.get(fieldname):
-			values[fieldname] = comparison_item.get(fieldname)
+		if not meta_has_field("Purchase Order Item", fieldname):
+			continue
+		value = comparison_item.get(fieldname)
+		if value is None or value == "":
+			continue
+		if fieldname == "phc_budget_expense_item_split_json":
+			value = compact_split_json_string(value)
+		values[fieldname] = value
 
 	missing = [
 		fieldname
@@ -293,7 +313,12 @@ def get_po_item_field_values(comparison_item):
 			as_dict=True,
 		)
 		if mr_values:
-			values.update({fieldname: value for fieldname, value in mr_values.items() if value})
+			for fieldname, value in mr_values.items():
+				if not value:
+					continue
+				if fieldname == "phc_budget_expense_item_split_json":
+					value = compact_split_json_string(value)
+				values[fieldname] = value
 
 	return values
 
@@ -652,6 +677,14 @@ def make_from_material_request(source_name, target_doc=None):
 					["cost_center", "cost_center"],
 					["budget_expense_item", "budget_expense_item"],
 					["budget_expense_detail_description", "budget_expense_detail_description"],
+					[
+						"phc_budget_expense_item_split_json",
+						"phc_budget_expense_item_split_json",
+					],
+					[
+						"phc_budget_expense_item_split_summary",
+						"phc_budget_expense_item_split_summary",
+					],
 				],
 			},
 		},
