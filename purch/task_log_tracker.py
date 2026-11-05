@@ -40,7 +40,10 @@ def apply_delete_link_check_patch():
 	_original = delete_doc.check_if_doc_is_dynamically_linked
 
 	def check_if_doc_is_dynamically_linked(doc, method="Delete"):
-		detach_task_logs_from_document(doc, method)
+		if method == "Delete":
+			delete_task_logs_for_document(doc, method)
+		else:
+			detach_task_logs_from_document(doc, method)
 		return _original(doc, method)
 
 	delete_doc.check_if_doc_is_dynamically_linked = check_if_doc_is_dynamically_linked
@@ -60,6 +63,52 @@ def _find_task_log_name(doc):
 	if name:
 		return name
 	return frappe.db.get_value("Task Log", {"subject": _track_subject(doc)}, "name")
+
+
+def _linked_task_log_names(doc):
+	names = set(
+		frappe.get_all(
+			"Task Log",
+			filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
+			pluck="name",
+		)
+	)
+	by_subject = _find_task_log_name(doc)
+	if by_subject:
+		names.add(by_subject)
+	return names
+
+
+def delete_task_logs_for_document(doc, method=None):
+	"""Remove Task Logs (and related change records) when the source document is deleted."""
+	if frappe.flags.in_migrate or frappe.flags.in_install:
+		return
+
+	if frappe.flags.in_task_log_delete:
+		return
+
+	if not doc or not getattr(doc, "doctype", None):
+		return
+
+	if doc.doctype in SKIP_DOCTYPES or frappe.get_meta(doc.doctype).istable:
+		return
+
+	allow_delete_despite_task_logs(doc)
+
+	for change_name in frappe.get_all(
+		"Task Log Change",
+		filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
+		pluck="name",
+	):
+		frappe.delete_doc("Task Log Change", change_name, force=True, ignore_permissions=True)
+
+	frappe.flags.in_task_log_delete = True
+	try:
+		for task_log_name in _linked_task_log_names(doc):
+			if frappe.db.exists("Task Log", task_log_name):
+				frappe.delete_doc("Task Log", task_log_name, force=True, ignore_permissions=True)
+	finally:
+		frappe.flags.in_task_log_delete = False
 
 
 def detach_task_logs_from_document(doc, method=None):
