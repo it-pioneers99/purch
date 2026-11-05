@@ -8,4 +8,5 @@ purch.patches.v1_0.setup_purchase_order_custom_field
 purch.patches.v1_0.update_purchase_order_custom_comparison_field
 purch.patches.v1_0.setup_approved_and_creation_date_fields
 purch.patches.v1_0.setup_material_request_request_status
-purch.patches.v1_0.backfill_task_logs
+purch.patches.v1_0.remove_task_log_doctypes
+purch.patches.v1_0.drop_task_log_orphan_tables

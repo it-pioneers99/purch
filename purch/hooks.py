@@ -27,7 +27,6 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/pioneer/css/desk_theme.css"
-app_include_js = "/assets/purch/js/task_log.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/purch/css/purch.css"
@@ -48,7 +47,6 @@ doctype_js = {
 	"Custom Comparison": "public/js/custom_comparison.js",
 	"Material Request": "public/js/material_request.js",
 	"Purchase Order": "public/js/purchase_order.js",
-	"Task Log": "purch/doctype/task_log/task_log.js",
 }
 
 override_doctype_dashboards = {
@@ -150,15 +148,6 @@ after_install = "purch.install.after_install"
 # Hook on document methods and events
 
 doc_events = {
-	"*": {
-		"before_cancel": "purch.task_log_tracker.detach_task_logs_from_document",
-		"on_trash": "purch.task_log_tracker.delete_task_logs_for_document",
-		"after_insert": "purch.task_log_tracker.log_document_change",
-		"on_update": "purch.task_log_tracker.log_document_change",
-		"on_update_after_submit": "purch.task_log_tracker.log_document_change",
-		"on_submit": "purch.task_log_tracker.log_document_change",
-		"on_cancel": "purch.task_log_tracker.log_document_change",
-	},
 	"Purchase Order": {
 		"before_insert": "purch.document_events.set_creation_date",
 		"validate": "purch.document_events.set_creation_date",
@@ -214,11 +203,6 @@ override_whitelisted_methods = {
 # exempt linked doctypes from being automatically cancelled
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-ignore_links_on_delete = ["Task Log", "Task Log Change"]
 
 # Request Events
 # ----------------

@@ -16,7 +16,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Purchase Comparison",
-   "link_count": 4,
+   "link_count": 2,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -36,26 +36,6 @@
    "label": "Request for Proposal",
    "link_count": 0,
    "link_to": "Request for Proposal",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Task Log",
-   "link_count": 0,
-   "link_to": "Task Log",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Task Log Change",
-   "link_count": 0,
-   "link_to": "Task Log Change",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -103,20 +83,6 @@
    "doc_view": "List",
    "label": "Request for Proposal",
    "link_to": "Request for Proposal",
-   "type": "DocType"
-  },
-  {
-   "color": "Orange",
-   "doc_view": "List",
-   "label": "Task Log",
-   "link_to": "Task Log",
-   "type": "DocType"
-  },
-  {
-   "color": "Purple",
-   "doc_view": "List",
-   "label": "Task Log Change",
-   "link_to": "Task Log Change",
    "type": "DocType"
   },
   {

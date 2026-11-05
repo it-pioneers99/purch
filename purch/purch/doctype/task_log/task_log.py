@@ -107,7 +107,7 @@ def ensure_task_log_for_document(reference_doctype, reference_name):
 	frappe.has_permission(reference_doctype, "read", reference_name, throw=True)
 	doc = frappe.get_doc(reference_doctype, reference_name)
 
-	from purch.task_log_tracker import _append_backfill_entry, _get_or_create_task_log
+	from purch.task_log_tracker import _append_backfill_entry, _get_or_create_task_log  # pyright: ignore[reportMissingImports]
 
 	task_log, is_new = _get_or_create_task_log(doc)
 	if is_new:
