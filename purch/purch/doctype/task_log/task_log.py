@@ -14,7 +14,7 @@ class TaskLog(Document):
 
 	def validate_reference(self):
 		if not self.reference_doctype or not self.reference_name:
-			frappe.throw(_("Document Type and Document are required"))
+			return
 
 		if frappe.flags.in_task_log_change:
 			return

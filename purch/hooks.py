@@ -151,6 +151,8 @@ after_install = "purch.install.after_install"
 
 doc_events = {
 	"*": {
+		"before_cancel": "purch.task_log_tracker.detach_task_logs_from_document",
+		"on_trash": "purch.task_log_tracker.detach_task_logs_from_document",
 		"after_insert": "purch.task_log_tracker.log_document_change",
 		"on_update": "purch.task_log_tracker.log_document_change",
 		"on_update_after_submit": "purch.task_log_tracker.log_document_change",

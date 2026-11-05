@@ -30,6 +30,62 @@ SKIP_DOCTYPES = {
 }
 
 
+def detach_task_logs_from_document(doc, method=None):
+	"""Unlink Task Logs so delete/cancel of the source document is never blocked."""
+	if frappe.flags.in_migrate or frappe.flags.in_install:
+		return
+
+	if not doc or not getattr(doc, "doctype", None):
+		return
+
+	if doc.doctype in SKIP_DOCTYPES or frappe.get_meta(doc.doctype).istable:
+		return
+
+	allow_delete_despite_task_logs(doc)
+
+	label = cstr(doc.name)
+	for task_log in frappe.get_all(
+		"Task Log",
+		filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
+		fields=["name", "description"],
+	):
+		note = _("\nReference detached ({0}): {1} {2}").format(
+			method or "unlink", doc.doctype, label
+		)
+		description = (task_log.description or "") + note
+		frappe.db.set_value(
+			"Task Log",
+			task_log.name,
+			{
+				"reference_doctype": None,
+				"reference_name": None,
+				"description": description.strip(),
+			},
+			update_modified=False,
+		)
+
+	for row in frappe.get_all(
+		"Task Log Change",
+		filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Task Log Change",
+			row,
+			{"reference_doctype": None, "reference_name": None},
+			update_modified=False,
+		)
+
+
+def allow_delete_despite_task_logs(doc):
+	"""Frappe link checks during cancel/delete."""
+	existing = list(doc.get("ignore_linked_doctypes") or [])
+	for doctype in ("Task Log", "Task Log Change"):
+		if doctype not in existing:
+			existing.append(doctype)
+	doc.ignore_linked_doctypes = existing
+
+
 def log_document_change(doc, method=None):
 	if frappe.flags.in_task_log_change:
 		return
