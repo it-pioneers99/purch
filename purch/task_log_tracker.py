@@ -30,6 +30,38 @@ SKIP_DOCTYPES = {
 }
 
 
+def apply_delete_link_check_patch():
+	"""Ensure Task Log never blocks delete/cancel even if hooks cache is stale."""
+	import frappe.model.delete_doc as delete_doc
+
+	if getattr(delete_doc, "_purch_task_log_patch_applied", False):
+		return
+
+	_original = delete_doc.check_if_doc_is_dynamically_linked
+
+	def check_if_doc_is_dynamically_linked(doc, method="Delete"):
+		detach_task_logs_from_document(doc, method)
+		return _original(doc, method)
+
+	delete_doc.check_if_doc_is_dynamically_linked = check_if_doc_is_dynamically_linked
+	delete_doc._purch_task_log_patch_applied = True
+
+
+def _track_subject(doc):
+	return _("Track: {0} {1}").format(doc.doctype, doc.name)
+
+
+def _find_task_log_name(doc):
+	name = frappe.db.get_value(
+		"Task Log",
+		{"reference_doctype": doc.doctype, "reference_name": doc.name},
+		"name",
+	)
+	if name:
+		return name
+	return frappe.db.get_value("Task Log", {"subject": _track_subject(doc)}, "name")
+
+
 def detach_task_logs_from_document(doc, method=None):
 	"""Unlink Task Logs so delete/cancel of the source document is never blocked."""
 	if frappe.flags.in_migrate or frappe.flags.in_install:
@@ -121,30 +153,32 @@ def log_document_change(doc, method=None):
 	finally:
 		frappe.flags.in_task_log_change = False
 
+	# on_cancel runs after before_cancel detach; logging must not leave a dynamic link
+	if method == "on_cancel":
+		detach_task_logs_from_document(doc, method)
+
 
 def _get_or_create_task_log(doc):
-	name = frappe.db.get_value(
-		"Task Log",
-		{"reference_doctype": doc.doctype, "reference_name": doc.name},
-		"name",
-	)
+	name = _find_task_log_name(doc)
 	if name:
 		return frappe.get_doc("Task Log", name), False
 
 	company = doc.get("company") if doc.meta.has_field("company") else None
-	task_log = frappe.get_doc(
-		{
-			"doctype": "Task Log",
-			"subject": _("Track: {0} {1}").format(doc.doctype, doc.name),
-			"reference_doctype": doc.doctype,
-			"reference_name": doc.name,
-			"status": "Open",
-			"priority": "Medium",
-			"assigned_to": doc.owner or frappe.session.user,
-			"auto_created": 1,
-			"company": company,
-		}
-	)
+	payload = {
+		"doctype": "Task Log",
+		"subject": _track_subject(doc),
+		"status": "Open",
+		"priority": "Medium",
+		"assigned_to": doc.owner or frappe.session.user,
+		"auto_created": 1,
+		"company": company,
+	}
+	# Cancelled/deleted docs must not get a new dynamic link (blocks check_no_back_links_exist)
+	if doc.docstatus != 2 and not getattr(doc.flags, "in_delete", False):
+		payload["reference_doctype"] = doc.doctype
+		payload["reference_name"] = doc.name
+
+	task_log = frappe.get_doc(payload)
 	task_log.insert(ignore_permissions=True)
 	return task_log, True
 
