@@ -27,6 +27,8 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/pioneer/css/desk_theme.css"
+app_include_js = "/assets/purch/js/task_log_shim.js"
+boot_session = "purch.boot.strip_removed_doctypes_from_boot"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/purch/css/purch.css"
@@ -192,6 +194,16 @@ doc_events = {
 
 override_whitelisted_methods = {
 	"frappe.desk.notifications.get_open_count": "purch.overrides.linked_documents.get_open_count",
+	"purch.purch.doctype.task_log.task_log.get_document_task_logs": (
+		"purch.stubs.legacy_api.get_document_task_logs"
+	),
+	"purch.purch.doctype.task_log.task_log.get_document_change_logs": (
+		"purch.stubs.legacy_api.get_document_change_logs"
+	),
+	"purch.purch.doctype.task_log.task_log.ensure_task_log_for_document": (
+		"purch.stubs.legacy_api.ensure_task_log_for_document"
+	),
+	"purch.purch.doctype.task_log.task_log.mark_completed": "purch.stubs.legacy_api.mark_completed",
 }
 #
 # each overriding function accepts a `data` argument;
