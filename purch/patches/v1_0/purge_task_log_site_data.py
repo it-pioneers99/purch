@@ -1,0 +1,11 @@
+# Copyright (c) 2026, Admin and contributors
+
+import frappe
+
+from purch.install import _purge_legacy_doctypes_from_site, _sync_purch_workspace
+
+
+def execute():
+	_purge_legacy_doctypes_from_site()
+	_sync_purch_workspace()
+	frappe.clear_cache()

@@ -2,10 +2,10 @@
 
 import frappe
 
-from purch.install import remove_task_log_desk_references, _sync_purch_workspace
+from purch.install import _purge_legacy_doctypes_from_site, _sync_purch_workspace
 
 
 def execute():
-	remove_task_log_desk_references()
+	_purge_legacy_doctypes_from_site()
 	_sync_purch_workspace()
 	frappe.clear_cache()

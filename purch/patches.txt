@@ -12,3 +12,5 @@ purch.patches.v1_0.remove_task_log_doctypes
 purch.patches.v1_0.drop_task_log_orphan_tables
 purch.patches.v1_0.cleanup_task_log_references
 purch.patches.v1_0.sync_purch_workspace
+purch.patches.v1_0.purge_task_log_site_data
+purch.patches.v1_0.strip_task_log_client_scripts
