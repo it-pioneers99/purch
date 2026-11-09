@@ -35,10 +35,11 @@ frappe.ui.form.on("Custom Comparison", {
 		if (frm.fields_dict.items?.grid) {
 			update_supplier_price_columns(frm);
 			setup_items_grid_selection(frm);
+			// Server already persisted totals on save — sync display only (avoid "Not Saved").
 			(frm.doc.items || []).forEach((row) => {
-				set_row_amounts(frm, row.doctype, row.name, row);
+				set_row_amounts(frm, row.doctype, row.name, row, true);
 			});
-			update_supplier_totals(frm);
+			update_supplier_totals(frm, true);
 		}
 	},
 
@@ -282,32 +283,46 @@ function get_supplier_total(frm, supplier_idx) {
 	);
 }
 
-function set_row_amounts(frm, cdt, cdn, row) {
+function flt_equal(a, b) {
+	return flt(a, 9) === flt(b, 9);
+}
+
+function set_row_amounts(frm, cdt, cdn, row, silent = false) {
 	const supplier_count = get_supplier_list(frm).length;
 	AMOUNT_FIELDS.forEach((field, idx) => {
 		const amount = idx < supplier_count ? get_item_amount(row, idx) : 0;
-		frappe.model.set_value(cdt, cdn, field, amount);
+		if (silent && flt_equal(row[field], amount)) {
+			return;
+		}
+		frappe.model.set_value(cdt, cdn, field, amount, null, silent);
 	});
 }
 
-function update_supplier_totals(frm) {
+function update_supplier_totals(frm, silent = false) {
 	const supplier_list = get_supplier_list(frm);
 	(frm.doc.suppliers || []).forEach((supplier_row, idx) => {
 		const total = supplier_list[idx] ? get_supplier_total(frm, idx) : 0;
+		if (silent && flt_equal(supplier_row.total_amount, total)) {
+			return;
+		}
 		frappe.model.set_value(
 			supplier_row.doctype,
 			supplier_row.name,
 			"total_amount",
-			total
+			total,
+			null,
+			silent
 		);
 	});
 
-	frm.refresh_field("suppliers");
-	update_parent_supplier_total_amounts(frm);
-	update_cost_save(frm);
+	if (!silent) {
+		frm.refresh_field("suppliers");
+	}
+	update_parent_supplier_total_amounts(frm, silent);
+	update_cost_save(frm, silent);
 }
 
-function update_parent_supplier_total_amounts(frm) {
+function update_parent_supplier_total_amounts(frm, silent = false) {
 	const supplier_list = get_supplier_list(frm);
 
 	TOTAL_AMOUNT_FIELDS.forEach((fieldname, idx) => {
@@ -320,12 +335,15 @@ function update_parent_supplier_total_amounts(frm) {
 
 		frm.set_df_property(fieldname, "label", label);
 		frm.set_df_property(fieldname, "hidden", has_supplier ? 0 : 1);
+		if (silent) {
+			return;
+		}
 		frm.doc[fieldname] = has_supplier ? format_currency(total) : "";
 		frm.refresh_field(fieldname);
 	});
 }
 
-function update_cost_save(frm) {
+function update_cost_save(frm, silent = false) {
 	const totals = (frm.doc.suppliers || [])
 		.map((row) => flt(row.total_amount))
 		.filter((total) => total > 0);
@@ -335,7 +353,10 @@ function update_cost_save(frm) {
 		cost_save = Math.max(...totals) - Math.min(...totals);
 	}
 
-	frm.set_value("cost_save", cost_save);
+	if (silent && flt_equal(frm.doc.cost_save, cost_save)) {
+		return;
+	}
+	frm.set_value("cost_save", cost_save, undefined, silent);
 }
 
 function update_row_price_summary(frm, cdt, cdn) {
