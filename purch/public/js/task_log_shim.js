@@ -79,24 +79,6 @@
 			};
 		}
 
-		if (frappe.call) {
-			const _call = frappe.call.bind(frappe);
-			frappe.call = function (opts) {
-				const method = opts && (opts.method || opts.cmd);
-				if (typeof method === "string" && method.indexOf(STUB) === 0) {
-					const hit = stub(method);
-					if (hit) {
-						return hit.then((message) => {
-							if (opts.callback) {
-								opts.callback({ message });
-							}
-							return { message };
-						});
-					}
-				}
-				return _call(opts);
-			};
-		}
 	}
 
 	function apply() {
